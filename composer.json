@@ -1,0 +1,21 @@
+{
+    "name": "biblibre/omekasc",
+    "description": "Omeka S CLI",
+    "type": "project",
+    "homepage": "https://github.com/biblibre/omekasc",
+    "require": {
+        "symfony/console": "^5.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Omeka\\Console\\": "src/"
+        }
+    },
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Julian Maurice",
+            "email": "julian.maurice@biblibre.com"
+        }
+    ]
+}
