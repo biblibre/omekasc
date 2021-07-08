@@ -6,6 +6,7 @@ use Symfony\Component\Console\Helper\Helper;
 
 class OmekaHelper extends Helper
 {
+    protected $application;
     protected $omekaPath;
     protected $omekaVersion;
 
@@ -40,6 +41,17 @@ class OmekaHelper extends Helper
         $version = $this->getOmekaVersion();
 
         return preg_filter('/^(\d+).*/', '\1', $version);
+    }
+
+    public function getApplication()
+    {
+        if (!isset($this->application)) {
+            $omekaPath = $this->getOmekaPath();
+            require "$omekaPath/bootstrap.php";
+            $this->application = \Omeka\Mvc\Application::init(require $omekaPath . '/application/config/application.config.php');
+        }
+
+        return $this->application;
     }
 
     protected function findOmekaPath()
