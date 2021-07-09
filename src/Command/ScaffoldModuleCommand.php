@@ -21,8 +21,10 @@ class ScaffoldModuleCommand extends Command
         $this->addOption('name', '', InputOption::VALUE_REQUIRED, 'The name of the module');
     }
 
+   
     protected function interact(InputInterface $input, OutputInterface $output)
     {
+        $io = new SymfonyStyle($input, $output);
         $io = new SymfonyStyle($input, $output);
 
         $name = $input->getOption('name');
