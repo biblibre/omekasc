@@ -18,9 +18,25 @@ class UserSetPasswordCommand extends Command
 	protected function configure()
 	{
 		$this->setDescription('Set a new password');
-		$this->addArgument('email', InputArgument::REQUIRED);
-		$this->addArgument('newPassword', InputArgument::REQUIRED);
-		$this->addArgument('confirmPassword', InputArgument::REQUIRED);
+		$this->addOption('email','',  InputOption::VALUE_REQUIRED);
+		$this->addOption('newPassword','', InputOption::VALUE_REQUIRED);
+		$this->addOption('confirmPassword','', InputOption::VALUE_REQUIRED);
+	}
+
+	protected function interact(InputInterface $input, OutputInterface $output)
+	{
+		$io= new SymfonyStyle($input, $output);
+		$io= new SymfonyStyle($input, $output);
+
+		$userEmail = $input->getOption('email');
+		if(null === $userEmail) {
+			$userEmail= $io->ask('Enter the user\'s email', $userEmail, function ($userEmail ){
+				return ($userEmail);
+			});
+			$input->setOption('email', $userEmail);
+		}	
+
+
 	}
 
 
@@ -30,29 +46,48 @@ class UserSetPasswordCommand extends Command
 		$services = $application->getServiceManager();
 		$entityManager = $services->get('Omeka\EntityManager');
 		$userRepository = $entityManager->getRepository('Omeka\Entity\User');
-		$userEmail = $input->getArgument('email');
-		$newPassword = $input->getArgument('newPassword');
-		$confirmPassword = $input->getArgument('confirmPassword');
 
-		$userTarget = $userRepository->findOneBy(['email'=>$userEmail]);
+		$io = new SymfonyStyle($input, $output);
 
-		if (empty($userTarget)) {
-			$output->writeln(sprintf("User does not exist " .  $userEmail));
+		try {
+			$userTarget=$userRepository->findOneBy(['email'=>$input->getOption('email')]);
+		} catch(\Exception $e){ 
+			$io->error($e->getMessage());
 			return Command::FAILURE;
 		}
 
-		$userTarget->setPassword($newPassword);
-
-			if ($confirmPassword != $newPassword){
-				$output->writeln(sprintf("Passwords must be the same"));
+		if (empty($userTarget)) {
+			$io->error('User does not exist ' .  $userEmail);
 			return Command::FAILURE;
-		}	
+		}
 
-		$entityManager->persist($userTarget);
-		$entityManager->flush();	
-		$output->writeln(sprintf("Password has been changed for " . $userEmail));	
-		return Command::SUCCESS;
-		
+		if($userTarget){
+
+			$newPassword=$input->getOption('newPassword');
+			if(null === $newPassword){
+				$newPassword=$io->askHidden('Enter the new password',$newPassword, function($newPassword){ 
+					return ($newPassword);
+				});
+
+				$input->setOption('newPassword', $newPassword);
+				$confirmPassword = $io->askHidden('Confirm the password', null, function($confirmPassword) {
+					return ($confirmPassword);
+				});
+
+			}
+
+			if ($newPassword === $confirmPassword) {
+
+				$userTarget->setPassword($newPassword);
+				$entityManager->persist($userTarget);
+				$entityManager->flush();	
+				$io->success("Password has been changed");	
+				return Command::SUCCESS;
+			}
+
+			$io->error("Passwords must be the same");
+			return Command::FAILURE;
+		}
 
 	}
 }

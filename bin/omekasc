@@ -6,6 +6,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use Symfony\Component\Console\Application;
 use Omeka\Console\Command\ScaffoldModuleCommand;
 use Omeka\Console\Command\SettingsGetCommand;
+use Omeka\Console\Command\UserSetPasswordCommand;
 use Omeka\Console\Helper\OmekaHelper;
 
 $application = new Application('Omeka S CLI', '0.1.0');
@@ -15,5 +16,7 @@ $helperSet->set(new OmekaHelper());
 
 $application->add(new ScaffoldModuleCommand());
 $application->add(new SettingsGetCommand());
+$application->add(new UserSetPasswordCommand());
+
 
 $application->run();
