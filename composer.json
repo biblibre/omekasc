@@ -17,5 +17,8 @@
             "name": "Julian Maurice",
             "email": "julian.maurice@biblibre.com"
         }
-    ]
+    ],
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.0"
+    }
 }
