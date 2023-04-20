@@ -87,5 +87,3 @@ class UserSetPasswordCommand extends Command
 
     }
 }
-?>
-
