@@ -21,4 +21,3 @@ $application->add(new UserSetPasswordCommand());
 $application->add(new SettingsSetCommand());
 
 $application->run();
-
