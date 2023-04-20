@@ -7,7 +7,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Question\AsCommand;
+use Symfony\Component\Console\Input\InputArgument;
 
 
 
@@ -19,20 +19,23 @@ class SettingsSetCommand extends Command
     protected function configure()
     {
         $this->setDescription('Define Omeka S settings');
-        $this->addOption('setting-name','', InputOption::VALUE_REQUIRED);
-        $this->addOption('setting-value','', InputOption::VALUE_REQUIRED);
+        $this->addArgument('setting-name', InputArgument::OPTIONAL);
+        $this->addArgument('setting-value', InputArgument::OPTIONAL);
     }
     
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
         
-        $settingName = $input->getOption('setting-name');
+        $settingName = $input->getArgument('setting-name');
         if(null === $settingName){
-            $settingName = $io->ask('What setting do you want to change', $settingName, function($settingName){
-                return($settingName);
-            });
-            $input->setOption('setting-name', $settingName);
+            $settingName = $io->ask('What setting do you want to change');
+            $input->setArgument('setting-name', $settingName);
+        }
+        $settingValue = $input->getArgument('setting-value');
+        if(null === $settingValue){
+            $settingValue = $io->ask('New Value');
+            $input->setArgument('setting-value', $settingValue);
         }
         
     }
@@ -41,18 +44,12 @@ class SettingsSetCommand extends Command
                $application = $omekaHelper->getApplication();
                $services = $application->getServiceManager();
                $settings = $services->get('Omeka\Settings');
-               $settingName = $input->getOption('setting-name');
-               $value = $settings->get($settingName);
-
-               $io = new SymfonyStyle($input, $output);
+               $settingName = $input->getArgument('setting-name');
+               $settingValue = $input->getArgument('setting-value');
+               $settings->set($settingName, $settingValue);
               
-                $newValue = $io->ask("$value is the new value:",null, function($newValue) use($settings, $settingName){
-                    $settings->set($settingName,$newValue);
+                
                     return Command::SUCCESS;
-                   
-                });
-               
-              return Command::SUCCESS;
       
      }
 }
