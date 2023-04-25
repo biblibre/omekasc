@@ -8,6 +8,7 @@ use Omeka\Console\Command\ScaffoldModuleCommand;
 use Omeka\Console\Command\SettingsGetCommand;
 use Omeka\Console\Command\UserSetPasswordCommand;
 use Omeka\Console\Helper\OmekaHelper;
+use Omeka\Console\Command\ListUsersCommand;
 
 $application = new Application('Omeka S CLI', '0.1.0');
 
@@ -17,6 +18,7 @@ $helperSet->set(new OmekaHelper());
 $application->add(new ScaffoldModuleCommand());
 $application->add(new SettingsGetCommand());
 $application->add(new UserSetPasswordCommand());
+$application->add(new ListUsersCommand());
 
 
 $application->run();
