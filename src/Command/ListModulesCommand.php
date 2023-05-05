@@ -26,17 +26,19 @@ class ListModulesCommand extends Command
         foreach ($modules as $module) {
             $name = $module->getName();
             $moduleStates = [
-                'active' => 'activé',
-                'not_active' => 'non activé',
-                'not_installed' => 'non installé',
-                'not_found' => 'non trouvé',
-                'invalid_module' => 'module invalide',
-                'invalid_ini' => 'module.ini invalide',
-                'invalid_omeka_version' => 'version omeka invalide',
-                'needs_upgrade' => 'necessite une mise à niveau',
+                'active' => ['description' => 'activé', 'color' => 'green'],
+                'not_active' =>['description' => 'non activé', 'color' => 'yellow'],
+                'not_installed' => ['description' => 'non installé', 'color' => 'yellow'],
+                'not_found' => ['description' => 'non trouvé', 'color' => 'red'],
+                'invalid_module' => ['description' => 'module invalide', 'color' => 'red'],
+                'invalid_ini' => ['description' => 'module.ini invalide', 'color' => 'red'],
+                'invalid_omeka_version' => ['description' => 'version de omeka invalide', 'color' => 'red'],
+                'needs_upgrade' => ['description' => 'mise à niveau nécessaire', 'color' => 'orange'],
             ];
             $state = $module->getState();
-            $description = $moduleStates[$state];
+            $stateInfo = $moduleStates[$state];
+            $description =  $stateInfo['description'];
+            $color =  $stateInfo['color'];
             $ini = $module->getIni();
             $version = $ini['version'];
             $output->writeln(sprintf("%s - v%s\n %s", $name, $version, $description));
