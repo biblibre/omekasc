@@ -7,14 +7,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 
-class ListModulesCommand extends Command
+class ModulesListCommand extends Command
 {
-    protected static $defaultName = 'list:modules';
+    protected static $defaultName = 'modules:list';
 
     protected function configure()
     {
-        $this->setDescription('Liste des Modules');
-        $this->setHelp('Cette commande permet de lister tous les modules installés sur Omeka S.');
+        $this->setDescription('Modules List');
+        $this->setHelp('This command lists all the modules installed on Omeka S.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -25,15 +25,9 @@ class ListModulesCommand extends Command
         $services = $application->getServiceManager();
         $modules = $services->get('Omeka\ModuleManager')->getModules();
 
-        $legend = [
-            'green' => 'activé',
-            'yellow' => 'non activé / non installé',
-            'red' => 'non trouvé / module invalide / module.ini invalide / version de omeka invalide',
-            'magenta' => 'mise à niveau nécessaire',
+        $color = [];
 
-        ];
-        $output->writeln('Légende :');
-        foreach ($legend as $color => $description) {
+        foreach ( $color as $description) {
             $outputStyle = new OutputFormatterStyle($color);
             $output->getFormatter()->setStyle($color, $outputStyle);
             $output->writeln(sprintf('<%s>%s</%s>', $color, $description, $color));
@@ -45,13 +39,13 @@ class ListModulesCommand extends Command
             $name = $module->getName();
             $moduleStates = [
                 'active' => ['description' => 'activé', 'color' => 'green'],
-                'not_active' => ['description' => 'non activé', 'color' => 'yellow'],
-                'not_installed' => ['description' => 'non installé', 'color' => 'yellow'],
-                'not_found' => ['description' => 'non trouvé', 'color' => 'red'],
-                'invalid_module' => ['description' => 'module invalide', 'color' => 'red'],
-                'invalid_ini' => ['description' => 'module.ini invalide', 'color' => 'red'],
-                'invalid_omeka_version' => ['description' => 'version de omeka invalide', 'color' => 'red'],
-                'needs_upgrade' => ['description' => 'mise à niveau nécessaire', 'color' => 'magenta'],
+                'not_active' => ['description' => 'not activé', 'color' => 'yellow'],
+                'not_installed' => ['description' => 'not installed', 'color' => 'yellow'],
+                'not_found' => ['description' => 'not found', 'color' => 'red'],
+                'invalid_module' => ['description' => 'invalid module', 'color' => 'red'],
+                'invalid_ini' => ['description' => 'invalid module.ini', 'color' => 'red'],
+                'invalid_omeka_version' => ['description' => 'invalid omeka version', 'color' => 'red'],
+                'needs_upgrade' => ['description' => 'upgrade needed', 'color' => 'magenta'],
             ];
             $state = $module->getState();
             $stateInfo = $moduleStates[$state];
@@ -63,7 +57,7 @@ class ListModulesCommand extends Command
             $outputStyle = new OutputFormatterStyle($color);
             $output->getFormatter()->setStyle($state, $outputStyle);
 
-            $output->writeln(sprintf('<%s>%s - version(%s)</%s>', $state, $name, $version, $state));
+            $output->writeln(sprintf('<%s>%s - %s (%s)</>', $state, $name, $state, $version));
         }
 
         return Command::SUCCESS;
