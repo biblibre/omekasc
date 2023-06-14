@@ -13,13 +13,14 @@ class ListUsersCommand extends Command
 
     protected function configure()
     {
-        $this->setDescription('Liste les utilisateurs avec leurs informations');
-        $this->addArgument('user-id', InputArgument::REQUIRED);
-        $this->setHelp('Cette commande permet de lister tous les utilisateurs enregistrés dans Omeka S avec leurs informations (nom, email, rôle, statut).');
+        $this->setDescription('List users with their information');
+        $this->addArgument('globalAdmins');
+        $this->setHelp('This command lists all users registered in Omeka S with their information (name, email, role, status).');
     }
 
    protected function execute(InputInterface $input, OutputInterface $output)
    {
+
        $omekaHelper = $this->getHelper('omeka');
        $application = $omekaHelper->getApplication();
        $services = $application->getServiceManager();
@@ -27,25 +28,31 @@ class ListUsersCommand extends Command
        $logger = $services->get('Omeka\Logger');
        $authentication = $services->get('Omeka\AuthenticationService');
 
-       $api = $services->get('Omeka\ApiManager');
-       $userId = $input->getArgument('user-id');
-
-       $user = $em->find('Omeka\Entity\User', $userId);
-       if (!$user) {
-           $logger->err(sprintf('User %d does not exist', $userId));
+       $globalAdmins = $em->getRepository('Omeka\Entity\User')->findBy(['role' => 'global_admin']);
+      
+       if (!$globalAdmins) {
+           $logger->err('No user with the global_admin role found');
            exit(1);
        }
-       $authentication->getStorage()->write($user);
+
+       $authentication->getStorage()->write($globalAdmins[0]);
+      
+
+       $api = $services->get('Omeka\ApiManager');
 
        $response = $api->search('users');
        $users = $response->getContent();
 
-       $output->writeln("<info>Liste des utilisateurs:</info>");
+       $output->writeln("<info>Users list:</info>");
        foreach ($users as $user) {
-           $output->writeln("- Nom: " . $user->name());
-           $output->writeln("  Email: " . $user->email());
-           $output->writeln("  Rôle: " . $user->role());
-           $output->writeln("  Statut: " . ($user->isActive() ? 'actif' : 'inactif') . "\n");
+           $userInfo = sprintf(
+               "%s <%s> %s ",
+               $user->name(),
+               $user->email(),
+               $user->role(),
+               ($user->isActive() ? : 'inactif')
+           );
+           $output->writeln($userInfo);
        }
 
        return Command::SUCCESS;
