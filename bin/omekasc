@@ -10,6 +10,13 @@ use Omeka\Console\Command\UserSetPasswordCommand;
 use Omeka\Console\Helper\OmekaHelper;
 use Omeka\Console\Command\SettingsSetCommand;
 use Omeka\Console\Command\ListModulesCommand;
+use Omeka\Console\Command\VersionCommand;
+use Omeka\Console\Command\CountItemCommand;
+use Omeka\Console\Command\CountItem_SetsCommand;
+use Omeka\Console\Command\CountMediaCommand;
+use Omeka\Console\Command\CountVocabulariesCommand;
+use Omeka\Console\Command\CountSitesCommand;
+use Omeka\Console\Command\CountResourceTemplatesCommand;
 
 $application = new Application('Omeka S CLI', '0.1.0');
 
@@ -21,5 +28,12 @@ $application->add(new SettingsGetCommand());
 $application->add(new UserSetPasswordCommand());
 $application->add(new SettingsSetCommand());
 $application->add(new ListModulesCommand());
+$application->add(new VersionCommand());
+$application->add(new CountItemCommand());
+$application->add(new CountItem_SetsCommand());
+$application->add(new CountMediaCommand());
+$application->add(new CountVocabulariesCommand());
+$application->add(new CountSitesCommand());
+$application->add(new CountResourceTemplatesCommand());
 
 $application->run();
