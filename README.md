@@ -34,6 +34,22 @@ A command line interface for Omeka S
    omekasc help settings:get
    ```
 
+## Available commands
+
+```
+help                Displays help for a command
+list                Lists commands
+module:activate     Activate a module
+module:deactivate   Deactivate a module
+module:install      Install a module
+module:uninstall    Uninstall a module
+module:upgrade      Upgrade a module
+scaffold:module     Generates files for a new module
+settings:get        List Omeka S settings
+settings:set        Define Omeka S settings
+user:set-password   Set a new password
+```
+
 ## License
 
 GNU General Public License v3.0 or later

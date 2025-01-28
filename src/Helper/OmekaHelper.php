@@ -54,6 +54,22 @@ class OmekaHelper extends Helper
         return $this->application;
     }
 
+    public function loginAsAdmin()
+    {
+        $application = $this->getApplication();
+        $services = $application->getServiceManager();
+        $em = $services->get('Omeka\EntityManager');
+        $userRepository = $em->getRepository('Omeka\Entity\User');
+        $admins = $userRepository->findBy(['role' => \Omeka\Permissions\Acl::ROLE_GLOBAL_ADMIN], ['id' => 'asc'], 1);
+        if (empty($admins)) {
+            throw new \Exception('No global admin found. Cannot log in');
+        }
+
+        $admin = reset($admins);
+        $authentication = $services->get('Omeka\AuthenticationService');
+        $authentication->getStorage()->write($admin);
+    }
+
     protected function findOmekaPath()
     {
         $dir = getcwd();
