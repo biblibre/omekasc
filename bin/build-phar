@@ -1,0 +1,43 @@
+#!/usr/bin/env php
+<?php
+
+$top = dirname(__FILE__, 2);
+
+if (file_exists('omekasc.phar')) {
+    unlink('omekasc.phar');
+}
+
+$composer_cmd = 'composer --working-dir=' . escapeshellarg($top)
+    . ' install -q --no-dev';
+shell_exec($composer_cmd);
+
+$phar = new Phar('omekasc.phar', 0, 'omekasc.phar');
+
+$phar->startBuffering();
+
+$directoryIterator = new RecursiveDirectoryIterator($top, FilesystemIterator::SKIP_DOTS);
+$iteratorIterator = new RecursiveIteratorIterator($directoryIterator);
+$regexIterator = new RegexIterator($iteratorIterator, '/\.php$/');
+foreach ($regexIterator as $file) {
+    $path = $file->getPathname();
+    $phar->addFile($path, str_replace($top, '', $path));
+}
+
+$bin = file_get_contents($top . '/bin/omekasc');
+$bin = preg_replace('|^#!/usr/bin/env php\s*|', '', $bin);
+$phar->addFromString('bin/omekasc', $bin);
+
+$stub = <<<'EOF'
+#!/usr/bin/env php
+<?php
+Phar::mapPhar('omekasc.phar');
+require 'phar://omekasc.phar/bin/omekasc';
+
+__HALT_COMPILER();
+EOF;
+$phar->setStub($stub);
+
+$phar->compressFiles(Phar::GZ);
+
+$phar->stopBuffering();
+
