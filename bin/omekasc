@@ -12,6 +12,8 @@ $application = new Application('Omeka S CLI', '0.2.0');
 $helperSet = $application->getHelperSet();
 $helperSet->set(new OmekaHelper());
 
+$application->add(new Command\DbMigrateCommand());
+
 $application->add(new Command\ModuleActivateCommand());
 $application->add(new Command\ModuleDeactivateCommand());
 $application->add(new Command\ModuleInstallCommand());

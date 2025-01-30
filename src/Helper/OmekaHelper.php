@@ -28,6 +28,10 @@ class OmekaHelper extends Helper
     {
         if (!isset($this->omekaVersion)) {
             $omekaPath = $this->getOmekaPath();
+            if (!$omekaPath) {
+                throw new \Exception('Not in an Omeka S directory');
+            }
+
             require_once $omekaPath . '/vendor/autoload.php';
             require_once $omekaPath . '/application/Module.php';
             $this->omekaVersion = \Omeka\Module::VERSION;
@@ -47,6 +51,10 @@ class OmekaHelper extends Helper
     {
         if (!isset($this->application)) {
             $omekaPath = $this->getOmekaPath();
+            if (!$omekaPath) {
+                throw new \Exception('Not in an Omeka S directory');
+            }
+
             require "$omekaPath/bootstrap.php";
             $this->application = \Omeka\Mvc\Application::init(require $omekaPath . '/application/config/application.config.php');
         }
