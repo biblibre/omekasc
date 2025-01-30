@@ -7,7 +7,7 @@ use Symfony\Component\Console\Application;
 use Omeka\Console\Command;
 use Omeka\Console\Helper\OmekaHelper;
 
-$application = new Application('Omeka S CLI', '0.2.0');
+$application = new Application('Omeka S CLI', '0.3.0');
 
 $helperSet = $application->getHelperSet();
 $helperSet->set(new OmekaHelper());
