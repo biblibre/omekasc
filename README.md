@@ -39,6 +39,7 @@ A command line interface for Omeka S
 ```
 help                Displays help for a command
 list                Lists commands
+db:migrate          Run pending database migrations
 module:activate     Activate a module
 module:deactivate   Deactivate a module
 module:install      Install a module
