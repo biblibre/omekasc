@@ -118,62 +118,135 @@ class ScaffoldModuleCommand extends Command
         $framework = $majorVersion < 3 ? 'Zend' : 'Laminas';
 
         return <<<EOF
-<?php
+        <?php
 
-namespace $moduleName;
+        namespace $moduleName;
 
-use Omeka\Module\AbstractModule;
-use $framework\EventManager\SharedEventManagerInterface;
-use $framework\Mvc\Controller\AbstractController;
-use $framework\Mvc\MvcEvent;
-use $framework\ServiceManager\ServiceLocatorInterface;
-use $framework\View\Renderer\PhpRenderer;
+        use Omeka\Module\AbstractModule;
+        use $framework\EventManager\SharedEventManagerInterface;
+        use $framework\Mvc\Controller\AbstractController;
+        use $framework\Mvc\MvcEvent;
+        use $framework\ServiceManager\ServiceLocatorInterface;
+        use $framework\View\Renderer\PhpRenderer;
 
-class Module extends AbstractModule
-{
-    public function onBootstrap(MvcEvent \$event)
-    {
-        parent::onBootstrap(\$event);
-    }
+        class Module extends AbstractModule
+        {
+            public function onBootstrap(MvcEvent \$event)
+            {
+                parent::onBootstrap(\$event);
+            }
 
-    public function install(ServiceLocatorInterface \$serviceLocator)
-    {
-    }
+            public function install(ServiceLocatorInterface \$serviceLocator)
+            {
+            }
 
-    public function uninstall(ServiceLocatorInterface \$serviceLocator)
-    {
-    }
+            public function uninstall(ServiceLocatorInterface \$serviceLocator)
+            {
+            }
 
-    public function getConfigForm(PhpRenderer \$renderer)
-    {
-    }
+            public function getConfigForm(PhpRenderer \$renderer)
+            {
+            }
 
-    public function handleConfigForm(AbstractController \$controller)
-    {
-    }
+            public function handleConfigForm(AbstractController \$controller)
+            {
+            }
 
-    public function attachListeners(SharedEventManagerInterface \$sharedEventManager)
-    {
-    }
+            public function attachListeners(SharedEventManagerInterface \$sharedEventManager)
+            {
+            }
 
-    public function getConfig()
-    {
-        return require __DIR__ . '/config/module.config.php';
-    }
-}
-EOF;
+            public function getConfig()
+            {
+                return require __DIR__ . '/config/module.config.php';
+            }
+        }
+        EOF;
     }
 
     protected function getModuleConfig(string $moduleName): string
     {
+        $moduleNameLower = strtolower($moduleName);
+
         return <<<EOF
-<?php
+        <?php
 
-namespace $moduleName;
+        namespace $moduleName;
 
-return [
-];
-EOF;
+        return [
+            // 'api_adapters' => [
+            //     'invokables' => [
+            //         '{$moduleNameLower}_things' => Api\Adapter\ThingAdapter::class,
+            //     ],
+            // ],
+            // 'controllers' => [
+            //     'invokables' => [
+            //         '$moduleName\Controller\Admin\Index' => Controller\Admin\IndexController::class,
+            //     ],
+            // ],
+            // 'entity_manager' => [
+            //     'mapping_classes_paths' => [
+            //         dirname(__DIR__) . '/src/Entity',
+            //     ],
+            //     'proxy_paths' => [
+            //         dirname(__DIR__) . '/data/doctrine-proxies',
+            //     ],
+            // ],
+            // 'form_elements' => [
+            //     'invokables' => [
+            //         '$moduleName\Form\ConfigForm' => Form\ConfigForm::class,
+            //     ],
+            // ],
+            // 'navigation' => [
+            //     'AdminModule' => [
+            //         [
+            //             'label' => '$moduleName',
+            //             'route' => 'admin/$moduleNameLower',
+            //             'resource' => '$moduleName\Controller\Admin\Index',
+            //             'privilege' => 'browse',
+            //             'class' => 'o-icon-module',
+            //         ],
+            //     ],
+            // ],
+            // 'router' => [
+            //     'routes' => [
+            //         'admin' => [
+            //             'child_routes' => [
+            //                 '$moduleNameLower' => [
+            //                     'type' => \Laminas\Router\Http\Segment::class,
+            //                     'options' => [
+            //                         'route' => '/{$moduleNameLower}[/:action]',
+            //                         'constraints' => [
+            //                             'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+            //                         ],
+            //                         'defaults' => [
+            //                             '__NAMESPACE__' => '$moduleName\Controller\Admin',
+            //                             'controller' => 'index',
+            //                             'action' => 'browse',
+            //                         ],
+            //                     ],
+            //                 ],
+            //             ],
+            //         ],
+            //     ],
+            // ],
+            // 'translator' => [
+            //     'translation_file_patterns' => [
+            //         [
+            //             'type' => 'gettext',
+            //             'base_dir' => dirname(__DIR__) . '/language',
+            //             'pattern' => '%s.mo',
+            //             'text_domain' => null,
+            //         ],
+            //     ],
+            // ],
+            // 'view_manager' => [
+            //     'template_path_stack' => [
+            //         dirname(__DIR__) . '/view',
+            //     ],
+            // ],
+        ];
+        EOF;
     }
 
     protected function getModuleIni(string $moduleName): string
@@ -181,15 +254,15 @@ EOF;
         $majorVersion = $this->getHelper('omeka')->getOmekaMajorVersion();
 
         return <<<EOF
-[info]
-name         = "$moduleName"
-version      = "0.1.0"
-author       = ""
-configurable = false
-description  = ""
-module_link  = "https://github.com/USER/omeka-s-module-$moduleName"
-author_link  = ""
-omeka_version_constraint = "^$majorVersion.0.0"
-EOF;
+        [info]
+        name         = "$moduleName"
+        version      = "0.1.0"
+        author       = ""
+        configurable = false
+        description  = ""
+        module_link  = "https://github.com/USER/omeka-s-module-$moduleName"
+        author_link  = ""
+        omeka_version_constraint = "^$majorVersion.0.0"
+        EOF;
     }
 }
