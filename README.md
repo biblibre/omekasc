@@ -5,11 +5,11 @@ A command line interface for Omeka S
 ## Quick start
 
 1. Download `omekasc.phar` from the
-   [latest release](https://git.biblibre.com/omeka-s/omekasc/releases/latest)
+   [latest release](https://github.com/biblibre/omekasc/releases/latest)
    into a directory that is in your `$PATH`
 
    ```
-   wget -O ~/.local/bin/omekasc https://git.biblibre.com/omeka-s/omekasc/releases/download/latest/omekasc.phar
+   wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.3.0/omekasc.phar
    ```
 
 2. Make it executable
