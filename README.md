@@ -49,6 +49,7 @@ scaffold:module     Generates files for a new module
 settings:get        List Omeka S settings
 settings:set        Define Omeka S settings
 user:set-password   Set a new password
+batch:update        Update modules and themes from a yaml config file
 ```
 
 ## License

@@ -4,7 +4,9 @@
     "type": "project",
     "homepage": "https://github.com/biblibre/omekasc",
     "require": {
-        "symfony/console": "^5.2"
+        "symfony/console": "^5.2",
+        "symfony/yaml": "^3.4",
+        "czproject/git-php": "^4.3"
     },
     "autoload": {
         "psr-4": {
