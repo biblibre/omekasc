@@ -37,6 +37,14 @@ class BatchUpdateCommand extends Command
 
         $data = Yaml::parseFile($yamlFile);
 
+        // Disable version notification
+        $settingInput = [
+            'command' => 'settings:set',
+            'setting-name' => 'version_notifications',
+            'setting-value' => '0'
+        ];
+        $this->executeCommand('settings:set', $settingInput, $output);
+
         if (isset($data['modules'])) {
             if (isset($data['modules']['new'])) {
                 $newModules = $data['modules']['new'];
