@@ -8,7 +8,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 use CzProject\GitPhp\Git;
 use CzProject\GitPhp\GitRepository;
@@ -68,15 +67,6 @@ class BatchUpdateCommand extends Command
                     if (!$this->updateRemote('module', $name, $remoteUrl, $tag, $output)) {
                         continue;
                     };
-                }
-            }
-            if (isset($data['modules']['remove'])) {
-                $removeModules = $data['modules']['remove'];
-                foreach ($removeModules as $removeModuleData) {
-                    $name = $removeModuleData['name'];
-                    $modulePath = OMEKA_PATH . "/modules/$name";
-                    $this->executeCommand('module:uninstall', ['command' => 'module:uninstall', 'module-name' => $name], $output);
-                    $output->writeln($this->formatMessage('%s can be removed safely', 'info', $modulePath));
                 }
             }
         }
