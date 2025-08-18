@@ -108,6 +108,14 @@ class BatchUpdateCommand extends Command
             }
         }
 
+        if (!empty($data['modules']['upgrade'])) {
+            $upgradeModules = $data['modules']['upgrade'];
+            foreach ($upgradeModules as $upgradeModuleData) {
+                $name = $upgradeModuleData['name'];
+                $this->executeCommand('module:upgrade', ['command' => 'module:upgrade', 'module-name' => $name], $output);
+            }
+        }
+
         return Command::SUCCESS;
     }
 
