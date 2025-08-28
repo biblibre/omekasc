@@ -27,4 +27,6 @@ $application->add(new Command\SettingsSetCommand());
 
 $application->add(new Command\UserSetPasswordCommand());
 
+$application->add(new Command\UpgradeCommand());
+
 $application->run();
