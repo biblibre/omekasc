@@ -9,7 +9,7 @@ A command line interface for Omeka S
    into a directory that is in your `$PATH`
 
    ```
-   wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.4.0/omekasc.phar
+   wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.5.0/omekasc.phar
    ```
 
 2. Make it executable
