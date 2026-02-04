@@ -6,25 +6,21 @@ A command line interface for Omeka S
 
 1. Download `omekasc.phar` from the
    [latest release](https://github.com/biblibre/omekasc/releases/latest)
-   into a directory that is in your `$PATH`
+   into a directory that is in your `$PATH` and make it executable
 
    ```
+   mkdir -p ~/.local/bin
    wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.5.1/omekasc.phar
-   ```
-
-2. Make it executable
-
-   ```
    chmod +x ~/.local/bin/omekasc
    ```
 
-3. Go to Omeka S directory
+2. Go to Omeka S directory
 
    ```
    cd /path/to/omeka
    ```
 
-4. Use it
+3. Use it
 
    ```
    # List all commands
