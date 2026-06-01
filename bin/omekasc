@@ -21,6 +21,7 @@ $application->add(new Command\ModuleUninstallCommand());
 $application->add(new Command\ModuleUpgradeCommand());
 
 $application->add(new Command\ScaffoldModuleCommand());
+$application->add(new Command\ScaffoldUpgradeScriptCommand());
 
 $application->add(new Command\SettingsGetCommand());
 $application->add(new Command\SettingsSetCommand());
