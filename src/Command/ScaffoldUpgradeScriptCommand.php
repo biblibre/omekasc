@@ -20,55 +20,53 @@ class ScaffoldUpgradeScriptCommand extends Command
     {
         $this->setDescription('Generates script to upgrade Omeka S, modules and themes');
         $this->addOption('versions-url', '', InputOption::VALUE_REQUIRED, 'URL to a JSON file containing the list of wanted versions for each module');
-        $this->addOption('add-module', '', InputOption::VALUE_REQUIRED, '');
-        $this->addOption('del-module', '', InputOption::VALUE_REQUIRED, '');
+        $this->addOption('add-module', '', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Name of a module to install');
+        $this->addOption('del-module', '', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Name of a module to remove');
+        $this->addOption('add-theme', '', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Name of a theme to install');
+        $this->addOption('del-theme', '', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Name of a theme to remove');
     }
 
     protected function interact(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
+        $helper = $this->getHelper('question');
 
-        $versions = $this->getAddons();
-        var_dump($versions);
+        $context = stream_context_create(['http' => ['method' => 'GET', 'header' => 'User-Agent: git/2.0']]);
+        $versions_json = file_get_contents($input->getOption('versions-url'), false, $context);
+        $versions = json_decode($versions_json, true);
 
-        $moduleNames = [];
-        foreach ($versions['modules'] as $module) {
-            $moduleNames []= $module['name'];
-        }
+        $moduleNames = array_map(fn($module) => $module['name'], $versions['modules']);
         $question = new Question('Module to remove ? ');
         $question->setAutocompleterValues($moduleNames);
 
-        $helper = $this->getHelper('question');
-        do {
-            $moduleToRemove = $helper->ask($input, $output, $question);
-            if ($moduleToRemove) {
-                $modulesToRemove[] = $moduleToRemove;
-            }
-        } while ($moduleToRemove);
-        $this->modulesToRemove = $modulesToRemove;
+        if (null === $input->getOption('del-module')) {
+            $modulesToRemove = [];
+            do {
+                if ($moduleToRemove = $helper->ask($input, $output, $question)) {
+                    $modulesToRemove[] = $moduleToRemove;
+                }
+            } while ($moduleToRemove);
+            $input->setOption('del-module', $modulesToRemove);
+        }
 
         $question = new Question('Module to add ? ');
         $question->setAutocompleterValues($moduleNames);
 
-        $helper = $this->getHelper('question');
-        do {
-            $moduleToAdd = $helper->ask($input, $output, $question);
-            $modulesToAdd[] = $moduleToAdd;
-        } while ($moduleToAdd);
-        $this->modulesToAdd = $modulesToAdd;
+        if (null === $input->getOption('add-module')) {
+            $helper = $this->getHelper('question');
+            $modulesToAdd = [];
+            do {
+                if ($module = $helper->ask($input, $output, $question)) {
+                    $modulesToAdd[] = $module;
+                }
+            } while ($module);
+            $input->setOption('add-module', $modulesToAdd);
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-
-        try {
-            $name = $this->validateName($input->getOption('name'));
-        } catch (\Exception $e) {
-            $io->error($e->getMessage());
-
-            return Command::FAILURE;
-        }
 
         $omekaHelper = $this->getHelper('omeka');
         $omekaPath = $omekaHelper->getOmekaPath();
@@ -78,230 +76,174 @@ class ScaffoldUpgradeScriptCommand extends Command
             return Command::FAILURE;
         }
 
-        $modulePath = "$omekaPath/modules/$name";
-        if (file_exists($modulePath)) {
-            $io->error("Path '$modulePath' already exists");
+        $modulesToRemove = $input->getOption('del-module');
+        $modulesToAdd = $input->getOption('add-module');
+        $modulesToUpdate = [];
 
-            return Command::FAILURE;
+        $script = <<<'SH'
+        #!/bin/sh
+
+        set -e
+
+        OMEKA_PATH=${OMEKA_PATH:-$HOME/www}
+
+        main () {
+
+        SH;
+
+        foreach ($modulesToRemove as $module) {
+            $script .= <<<SH
+                omekasc module:uninstall "$module"
+                remove_folder "$module" modules
+
+            SH;
         }
 
-        if (!mkdir($modulePath)) {
-            $io->error("Cannot create directory '$modulePath'");
+        $script .= <<<'SH'
+            echo "Updating Omeka S to v4.1.1"
+            update_git_remote "$OMEKA_PATH" "https://github.com/omeka/omeka-s"
+            git -C "$OMEKA_PATH" checkout -b release-4.1
+            git -C "$OMEKA_PATH" reset --hard v4.1.1
+            git -C "$OMEKA_PATH" branch --set-upstream-to origin/release-4.1
+            ( cd "$OMEKA_PATH" && npm install && rm -rf vendor && npx gulp deps )
 
-            return Command::FAILURE;
+        SH;
+
+        foreach ($modulesToAdd as ['name' => $name, 'tag' => $tag, 'url' => $url]) {
+            $script .= <<<SH
+                add_module $name $url $tag
+
+            SH;
         }
 
-        $configPath = "$modulePath/config";
-        if (!mkdir($configPath)) {
-            $io->error("Cannot create directory '$configPath'");
+        foreach ($modulesToUpdate as ['name' => $name, 'tag' => $tag, 'url' => $url]) {
+            $script .= <<<SH
+                update_module $module $url $tag
 
-            return Command::FAILURE;
+            SH;
         }
 
-        $moduleClassPath = "$modulePath/Module.php";
-        if (false === file_put_contents($moduleClassPath, $this->getModuleCode($name))) {
-            $io->error("Cannot write to $moduleClassPath");
 
-            return Command::FAILURE;
+        $script .= <<<'SH'
+        omekasc db:migrate
+
+        SH;
+
+        foreach ($modulesToAdd as ['name' => $name]) {
+            $script .= <<<SH
+                omekasc module:install $name
+
+            SH;
         }
 
-        $moduleConfigPath = "$configPath/module.config.php";
-        if (false === file_put_contents($moduleConfigPath, $this->getModuleConfig($name))) {
-            $io->error("Cannot write to $moduleConfigPath");
+        foreach ($modulesToUpdate as ['name' => $name]) {
+            $script .= <<<SH
+                omekasc module:upgrade $name
 
-            return Command::FAILURE;
+            SH;
         }
 
-        $moduleIniPath = "$configPath/module.ini";
-        if (false === file_put_contents($moduleIniPath, $this->getModuleIni($name))) {
-            $io->error("Cannot write to $moduleIniPath");
-
-            return Command::FAILURE;
+        $script .= <<<'SH'
         }
 
-        $io->success("Module $name created in '$modulePath'");
+        update_git_remote () {
+            directory="$1"
+            url="$2"
+
+            if [ ! -e "$directory/.git" ]; then
+                git -C "$directory" init
+            fi
+
+            if git -C "$directory" remote get-url origin >/dev/null 2>/dev/null; then
+                git -C "$directory" remote set-url origin "$url"
+            else
+                git -C "$directory" remote add origin "$url"
+            fi
+            git -C "$directory" fetch --prune --quiet origin
+        }
+
+        add_module () {
+            name="$1"
+            remote_url="$2"
+            tag="$3"
+
+            echo "Cloning module $name ($tag, $remote_url)"
+
+            module_path="$OMEKA_PATH/modules/$name"
+            git clone "$remote_url" "$module_path"
+            git -C "$module_path" reset --hard "$tag"
+
+            if [ -e "$module_path/composer.json" ]; then
+                COMPOSER_DISCARD_CHANGES=true "$OMEKA_PATH/build/composer.phar" --working-dir="$module_path" install --no-dev --no-interaction
+            fi
+        }
+
+        update_module () {
+            name="$1"
+            remote_url="$2"
+            tag="$3"
+
+            echo "Updating module $name ($tag, $remote_url)"
+
+            module_path="$OMEKA_PATH/modules/$name"
+            update_git_remote "$module_path" "$remote_url"
+            git -C "$module_path" reset --hard "$tag"
+
+            if [ -e "$module_path/composer.json" ]; then
+                COMPOSER_DISCARD_CHANGES=true "$OMEKA_PATH/build/composer.phar" --working-dir="$module_path" install --no-dev --no-interaction
+            fi
+        }
+
+        update_theme () {
+            name="$1"
+            remote_url="$2"
+            tag="$3"
+
+            echo "Updating theme $name ($tag, $remote_url)"
+
+            theme_path="$OMEKA_PATH/themes/$name"
+            update_git_remote "$theme_path" "$remote_url"
+            git -C "$theme_path" reset --hard "$tag"
+        }
+
+        add_theme () {
+            name="$1"
+            remote_url="$2"
+            tag="$3"
+
+            echo "Cloning theme $name ($tag, $remote_url)"
+
+            theme_path="$OMEKA_PATH/themes/$name"
+            git clone "$remote_url" "$theme_path"
+            git -C "$theme_path" reset --hard "$tag"
+        }
+
+        remove_folder () {
+            name="$1"
+            type="$2"
+
+            echo "Removing folder $type/$name"
+
+            folder_path="$OMEKA_PATH/$type/$name"
+            rm -rf "$folder_path"
+        }
+
+        omekasc () {
+            OMEKASC="$HOME/.local/bin/omekasc"
+            if [ ! -e "$OMEKASC" ]; then
+                mkdir -p "$(dirname "$OMEKASC")"
+                wget -q -O "$OMEKASC" https://github.com/biblibre/omekasc/releases/download/v0.5.1/omekasc.phar
+                chmod +x "$OMEKASC"
+            fi
+            (cd "$OMEKA_PATH" && $OMEKASC "$@")
+        }
+
+        main "$@"
+
+        SH;
+
+        echo $script;
 
         return Command::SUCCESS;
-    }
-
-    protected function validateName(?string $name)
-    {
-        $name = trim($name);
-        if (empty($name)) {
-            throw new \Exception('Name cannot be empty');
-        }
-
-        if (!preg_match('/^[A-Z][0-9A-Za-z]*$/', $name)) {
-            throw new \Exception('Name must contain only alphanumeric characters, and must start with a capital letter');
-        }
-
-        return $name;
-    }
-
-    protected function getModuleCode(string $moduleName): string
-    {
-        $majorVersion = $this->getHelper('omeka')->getOmekaMajorVersion();
-        $framework = $majorVersion < 3 ? 'Zend' : 'Laminas';
-
-        return <<<EOF
-        <?php
-
-        namespace $moduleName;
-
-        use Omeka\Module\AbstractModule;
-        use $framework\EventManager\SharedEventManagerInterface;
-        use $framework\Mvc\Controller\AbstractController;
-        use $framework\Mvc\MvcEvent;
-        use $framework\ServiceManager\ServiceLocatorInterface;
-        use $framework\View\Renderer\PhpRenderer;
-
-        class Module extends AbstractModule
-        {
-            public function onBootstrap(MvcEvent \$event)
-            {
-                parent::onBootstrap(\$event);
-            }
-
-            public function install(ServiceLocatorInterface \$serviceLocator)
-            {
-            }
-
-            public function uninstall(ServiceLocatorInterface \$serviceLocator)
-            {
-            }
-
-            public function getConfigForm(PhpRenderer \$renderer)
-            {
-            }
-
-            public function handleConfigForm(AbstractController \$controller)
-            {
-            }
-
-            public function attachListeners(SharedEventManagerInterface \$sharedEventManager)
-            {
-            }
-
-            public function getConfig()
-            {
-                return require __DIR__ . '/config/module.config.php';
-            }
-        }
-        EOF;
-    }
-
-    protected function getModuleConfig(string $moduleName): string
-    {
-        $moduleNameLower = strtolower($moduleName);
-
-        return <<<EOF
-        <?php
-
-        namespace $moduleName;
-
-        return [
-            // 'api_adapters' => [
-            //     'invokables' => [
-            //         '{$moduleNameLower}_things' => Api\Adapter\ThingAdapter::class,
-            //     ],
-            // ],
-            // 'controllers' => [
-            //     'invokables' => [
-            //         '$moduleName\Controller\Admin\Index' => Controller\Admin\IndexController::class,
-            //     ],
-            // ],
-            // 'entity_manager' => [
-            //     'mapping_classes_paths' => [
-            //         dirname(__DIR__) . '/src/Entity',
-            //     ],
-            //     'proxy_paths' => [
-            //         dirname(__DIR__) . '/data/doctrine-proxies',
-            //     ],
-            // ],
-            // 'form_elements' => [
-            //     'invokables' => [
-            //         '$moduleName\Form\ConfigForm' => Form\ConfigForm::class,
-            //     ],
-            // ],
-            // 'navigation' => [
-            //     'AdminModule' => [
-            //         [
-            //             'label' => '$moduleName',
-            //             'route' => 'admin/$moduleNameLower',
-            //             'resource' => '$moduleName\Controller\Admin\Index',
-            //             'privilege' => 'browse',
-            //             'class' => 'o-icon-module',
-            //         ],
-            //     ],
-            // ],
-            // 'router' => [
-            //     'routes' => [
-            //         'admin' => [
-            //             'child_routes' => [
-            //                 '$moduleNameLower' => [
-            //                     'type' => \Laminas\Router\Http\Segment::class,
-            //                     'options' => [
-            //                         'route' => '/{$moduleNameLower}[/:action]',
-            //                         'constraints' => [
-            //                             'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-            //                         ],
-            //                         'defaults' => [
-            //                             '__NAMESPACE__' => '$moduleName\Controller\Admin',
-            //                             'controller' => 'index',
-            //                             'action' => 'browse',
-            //                         ],
-            //                     ],
-            //                 ],
-            //             ],
-            //         ],
-            //     ],
-            // ],
-            // 'translator' => [
-            //     'translation_file_patterns' => [
-            //         [
-            //             'type' => 'gettext',
-            //             'base_dir' => dirname(__DIR__) . '/language',
-            //             'pattern' => '%s.mo',
-            //             'text_domain' => null,
-            //         ],
-            //     ],
-            // ],
-            // 'view_manager' => [
-            //     'template_path_stack' => [
-            //         dirname(__DIR__) . '/view',
-            //     ],
-            // ],
-        ];
-        EOF;
-    }
-
-    protected function getModuleIni(string $moduleName): string
-    {
-        $majorVersion = $this->getHelper('omeka')->getOmekaMajorVersion();
-
-        return <<<EOF
-        [info]
-        name         = "$moduleName"
-        version      = "0.1.0"
-        author       = ""
-        configurable = false
-        description  = ""
-        module_link  = "https://github.com/USER/omeka-s-module-$moduleName"
-        author_link  = ""
-        omeka_version_constraint = "^$majorVersion.0.0"
-        EOF;
-    }
-
-    protected function getAddons(): array
-    {
-        if (!isset($this->addons)) {
-            // FIXME User-Agent is a hack to bypass Anubis
-            $context = stream_context_create(['http' => ['method' => 'GET', 'header' => 'User-Agent: git/2.0']]);
-            $versions_json = file_get_contents($input->getOption('versions-url'), false, $context);
-            $versions = json_decode($versions_json, true);
-            $this->addons = $versions;
-        }
-
-        return $this->addons;
     }
 }
