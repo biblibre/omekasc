@@ -3,7 +3,7 @@
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Symfony\Component\Console\Application;
+use Omeka\Console\Application;
 use Omeka\Console\Command;
 use Omeka\Console\Helper\OmekaHelper;
 
