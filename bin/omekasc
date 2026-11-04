@@ -6,11 +6,13 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 use Omeka\Console\Application;
 use Omeka\Console\Command;
 use Omeka\Console\Helper\OmekaHelper;
+use Omeka\Console\Helper\FilesystemHelper;
 
 $application = new Application('Omeka S CLI', '0.5.1');
 
 $helperSet = $application->getHelperSet();
 $helperSet->set(new OmekaHelper());
+$helperSet->set(new FilesystemHelper());
 
 $application->add(new Command\DbMigrateCommand());
 
@@ -19,6 +21,7 @@ $application->add(new Command\ModuleDeactivateCommand());
 $application->add(new Command\ModuleInstallCommand());
 $application->add(new Command\ModuleUninstallCommand());
 $application->add(new Command\ModuleUpgradeCommand());
+$application->add(new Command\ModuleUpdateCommand());
 
 $application->add(new Command\ScaffoldModuleCommand());
 

@@ -41,6 +41,7 @@ module:activate     Activate a module
 module:deactivate   Deactivate a module
 module:install      Install a module
 module:uninstall    Uninstall a module
+module:update       Update a module
 module:upgrade      Upgrade a module
 scaffold:module     Generates files for a new module
 settings:get        List Omeka S settings
