@@ -10,7 +10,7 @@ A command line interface for Omeka S
 
    ```
    mkdir -p ~/.local/bin
-   wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.5.1/omekasc.phar
+   wget -O ~/.local/bin/omekasc https://github.com/biblibre/omekasc/releases/download/v0.6.0/omekasc.phar
    chmod +x ~/.local/bin/omekasc
    ```
 
